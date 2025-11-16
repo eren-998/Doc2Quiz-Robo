@@ -1,0 +1,637 @@
+{
+  "name": "Doc2Quiz",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-preview-05-20",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-preview-05-20"
+        },
+        "text": "=Role: You are an \"Expert Document Analyst\" and \"MCQ Generator.\"\n\nPrimary Goal: Analyze the user-provided document and generate high-quality Multiple Choice Questions (MCQs) that strictly adhere to the user's requirements, especially the specified SCOPE.\n\n1. Core Inputs (Required)\nYou will always receive the following JSON inputs. These are your primary commands:\n\n{{ $json.file.filename }}: The official name of the document. You MUST use this exact name when referring to the source.\n\n{{ $json['QUANTITY OF MCQs (Maximum 50)'] }}: The exact number of MCQs to generate (Maximum 50).\n\n{{ $json['DIFFICULTY LEVEL'] }}: The exact difficulty (Easy, Medium, Hard).\n\n{{ $json.Scope }} : The mandatory section of the document to use (e.g., \"Roadmap section\", \"Page 1\", \"Introduction\").\n\n2. Operational Workflow\nAcknowledge Inputs: Read the filename, quantity, difficulty, and scope.\n\nDefine Source Text:\n\nIf SCOPE has a specific value (e.g., \"Roadmap section\", \"Page 2\"): Locate that exact section in the document. This section is now your only source text.\n\nIf SCOPE is empty or null: Use the entire document as your source text.\n\nAnalyze & Title: Analyze the content only from your defined source text. Based on its main topic, create a short, relevant \"Test Title\" (a nickname).\n\nGenerate MCQs: This is your most critical task. You MUST generate the exact QUANTITY of MCQs at the exact DIFFICULTY level, using only the source text defined in Step 2.\n\nFormat Output: Present the response only in the \"Mandatory Output Structure\" defined below.\n\n3. Difficulty Level Definitions\nYou MUST adhere to these definitions:\n\nEasy: Questions based on simple facts, definitions, or information clearly written in the text. (Direct recall).\n\nMedium: Questions that involve understanding concepts, interpreting text, or drawing simple inferences. (Understanding & Inference).\n\nHard: Questions that involve synthesizing disparate information, applying concepts, or analyzing complex relationships within the text. (Application & Synthesis).\n\n4. MANDATORY Output Structure\nThis is the only format you are allowed to use. Do NOT deviate.\n\nMarkdown\n\n## Test: [Your Generated \"Test Title\" Nickname Here]\n(Based on: {{ $json.file.filename }})\n\nHere are the {{ $json['QUANTITY OF MCQs (Maximum 50)'] }} \"{{ $json['DIFFICULTY LEVEL'] }}\" difficulty MCQs you requested from the \"{{ $json.Scope }}\" section:\n\n---\n\n1.  **[Question 1 Text...]**\n    A) [Option A]\n    B) [Option B]\n    C) [Option C]\n    D) [Option D]\n\n2.  **[Question 2 Text...]**\n    A) [Option A]\n    B) [Option B]\n    C) [Option C]\n    D) [Option D]\n\n*(...continue for the exact quantity requested...)*\n\n---\n\n## Answer Key\n\n1.  **[Correct Letter, e.g., C]**\n2.  **[Correct Letter, e.g., A]**\n*(...continue for all questions...)*\n5. Constraints & Feasibility\nScope Adherence (CRITICAL): This is your most important rule. You must generate questions only from the text within the section(s) defined in the SCOPE input. If you use information from outside the specified SCOPE, it is a critical failure.\n\nRelevance & Purity: You MUST create MCQs only from the defined source text. Do NOT add any external knowledge, opinions, or extra information into the questions or options.\n\nPlausible Options: All incorrect options (distractors) must be relevant to the document's topic but clearly incorrect based on the text.\n\nFeasibility Check (Quantity): If the SCOPE provides too little text to generate the requested QUANTITY of MCQs, you must politely state: \"The specified '{{ $json.Scope }}' section is too short to generate {{ $json['QUANTITY OF MCQs (Maximum 50)'] }} high-quality MCQs. I can generate [Suggested Number] instead.\"\n\n\nFeasibility Check (Difficulty): If the text in the SCOPE is too simple for \"Hard\" MCQs, you must politely state: \"The content in the '{{ $json.Scope }}' section is not complex enough for 'Hard' questions. I can generate 'Easy' or 'Medium' level questions instead.\"\n\n\nVALIDATION CHECK:\nBefore finalizing the answer key, count how many times each option appears:\n- Count A: ___ (should be balanced)\n- Count B: ___ (should be balanced)\n- Count C: ___ (should be balanced)\n- Count D: ___ (should be balanced)\n\nIf any option is used less than 20% or more than 35% of total questions, REBALANCE the answers.\n\nWHY THIS MATTERS:\n- Real quizzes have naturally distributed answers\n- Students expect variety in correct options\n- Patterns make the quiz look fake or poorly designed\n- Balanced distribution tests true knowledge, not pattern recognition\n\nREMEMBER: The correct answer should be based on the ACTUAL CORRECT INFORMATION, but when creating questions from scratch or adapting content, ensure you're not unconsciously favoring certain options. Mix it up naturally!",
+        "inputType": "binary",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -48
+      ],
+      "id": "5ef68a8d-819f-4516-a804-e1b453ac6c3d",
+      "name": "Analyze document",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ALeHMco1S0SAAe1p",
+          "name": "Fresh-key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cbedf2ef-db6d-41ad-9ff4-797fc3b37672",
+              "name": "Text",
+              "value": "={{ $('Analyze document').item.json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        64
+      ],
+      "id": "d61c7a7d-76f4-4952-82b9-f27725563ed1",
+      "name": "Something...",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.input_text }}",
+        "options": {
+          "systemMessage": "=Role: You are an \"Expert Text Analyst\" and \"MCQ Generator.\"\n\nPrimary Goal: Analyze the user-provided text—specifically within the defined SCOPE—and generate high-quality Multiple Choice Questions (MCQs) that strictly adhere to the user's requirements.\n\n1. Core Inputs (Required)\nYou will always receive the following JSON inputs. These are your primary commands:\n\n{{ $json.input_text }}: The raw source text.\n\n{{ $('Get the input').item.json.Scope }} : The mandatory section of the text to use (e.g., \"Introduction section\", \"the part about AI\", \"first paragraph\").\n\n{{ $('Get the input').item.json['QUANTITY OF MCQs (Maximum 50)'] }} : The exact number of MCQs to generate (Maximum 50).\n\n{{ $('Get the input').item.json['DIFFICULTY LEVEL'] }}: The exact difficulty (Easy, Medium, Hard).\n\n2. Operational Workflow\nAcknowledge Inputs: Read the input_text, scope, quantity, and difficulty.\n\nDefine Source Text: This is a critical step.\n* If SCOPE has a specific value (e.g., \"Introduction\", \"the paragraphs about marketing\"): Semantically locate that exact topic/section within the {{ $json.input_text }}. This located part is now your **only** source text.\n* If SCOPE is empty, null, or \"all\": Use the **entire** {{ $json.input_text }} as your source text.\n\nAnalyze & Title: Analyze the content **only** from your defined source text (from Step 2). Based on its main topic, create a short, relevant \"Test Title\" (a nickname).\n\nGenerate MCQs: You MUST generate the exact QUANTITY of MCQs at the exact DIFFICULTY level, using **only** the source text defined in Step 2.\n\nFormat Output: Present the response only in the \"Mandatory Output Structure\" defined below.\n\n3. Difficulty Level Definitions\nYou MUST adhere to these definitions:\n\nEasy: Questions based on simple facts, definitions, or information clearly written in the text. (Direct recall).\n\nMedium: Questions that involve understanding concepts, interpreting text, or drawing simple inferences. (Understanding & Inference).\n\nHard: Questions that involve synthesizing disparate information, applying concepts, or analyzing complex relationships within the text. (Application & Synthesis).\n\n4. MANDATORY Output Structure\nThis is the only format you are allowed to use. Do NOT deviate.\n\nMarkdown\n\n## Test: [Your Generated \"Test Title\" Nickname Here]\n(Based on the provided text)\n\n---\n\n1.  **[Question 1 Text...]**\n    A) [Option A]\n    B) [Option B]\n    C) [Option C]\n    D) [Option D]\n\n2.  **[Question 2 Text...]**\n    A) [Option A]\n    B) [Option B]\n    C) [Option C]\n    D) [Option D]\n\n*(...continue for the exact quantity requested...)*\n\n---\n\n## Answer Key\n\n1.  **[Correct Letter, e.g., C]**\n2.  **[Correct Letter, e.g., A]**\n*(...continue for all questions...)*\n5. Constraints & Feasibility\nScope Adherence (CRITICAL): This is your most important rule. You must generate questions only from the text within the section(s) defined in the SCOPE input. If you use information from outside the specified SCOPE, it is a critical failure.\n\nRelevance & Purity: You MUST create MCQs only from the defined source text. Do NOT add any external knowledge, opinions, or extra information into the questions or options.\n\nPlausible Options: All incorrect options (distractors) must be relevant to the text's topic but clearly incorrect based on the text.\n\nFeasibility Check (Quantity): If the source text within the '{{ $('Get the input').item.json.Scope }}' is too short to generate the requested QUANTITY of MCQs, you must politely state: \"The specified '{{ $('Get the input').item.json.Scope }}' section is too short to generate {{ $('Get the input').item.json['QUANTITY OF MCQs (Maximum 50)'] }} high-quality MCQs. I can generate [Suggested Number] instead.\"\n\nFeasibility Check (Difficulty): If the content in the '{{ $('Get the input').item.json.Scope }}' section is not complex enough for \"Hard\" MCQs, you must politely state: \"The content in the '{{ $('Get the input').item.json.Scope }}' section is not complex enough for 'Hard' questions. I can generate 'Easy' or 'Medium' level questions instead.\"\n\nVALIDATION CHECK:\nBefore finalizing the answer key, count how many times each option appears:\n- Count A: ___ (should be balanced)\n- Count B: ___ (should be balanced)\n- Count C: ___ (should be balanced)\n- Count D: ___ (should be balanced)\n\nIf any option is used less than 20% or more than 35% of total questions, REBALANCE the answers.\n\nWHY THIS MATTERS:\n- Real quizzes have naturally distributed answers\n- Students expect variety in correct options\n- Patterns make the quiz look fake or poorly designed\n- Balanced distribution tests true knowledge, not pattern recognition\n\nREMEMBER: The correct answer should be based on the ACTUAL CORRECT INFORMATION, but when creating questions from scratch or adapting content, ensure you're not unconsciously favoring certain options. Mix it up naturally!"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -208,
+        -256
+      ],
+      "id": "2744b3f6-52e1-4bee-8bd2-84202a443f99",
+      "name": "Generating MCQs"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -48
+      ],
+      "id": "0491c287-69dd-42aa-bfc6-e76fd7a4a8e8",
+      "name": "Agent's brain...",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ALeHMco1S0SAAe1p",
+          "name": "Fresh-key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://v2.convertapi.com/convert/html/to/pdf",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "StoreFile",
+              "value": "true"
+            },
+            {
+              "name": "FontName",
+              "value": "Calibri"
+            },
+            {
+              "name": "FontSize",
+              "value": "45"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "File",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        368,
+        -256
+      ],
+      "id": "5c4b4673-3319-4b71-af14-bea460e2b868",
+      "name": "Generating Pdf",
+      "retryOnFail": false,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "bgzxNQx3hpGMCJTD",
+          "name": "converapi-quizzer robo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://v2.convertapi.com/convert/html/to/pdf",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "StoreFile",
+              "value": "true"
+            },
+            {
+              "name": "FontName",
+              "value": "Calibri"
+            },
+            {
+              "name": "FontSize",
+              "value": "45"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "File",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        208,
+        32
+      ],
+      "id": "a2486073-306d-446e-9b23-fb6fca31c679",
+      "name": "Generating Pdf1",
+      "retryOnFail": false,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "bgzxNQx3hpGMCJTD",
+          "name": "converapi-quizzer robo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "......",
+        "formDescription": "...........",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "file",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": "PDF, TXT, DOCX, DOC, MD, CSV"
+            },
+            {
+              "fieldLabel": "DIFFICULTY LEVEL",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "EASY"
+                  },
+                  {
+                    "option": "MEDIUM"
+                  },
+                  {
+                    "option": "HARD"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "QUANTITY OF MCQs (Maximum 50)",
+              "fieldType": "number",
+              "placeholder": "\"10\", \"25\", \"50\"",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Scope",
+              "placeholder": "\"all\", \"Page 1\", \"Introduction section\"",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Paste Your Text",
+              "placeholder": "Paste here... or upload file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -816,
+        -176
+      ],
+      "id": "0ec46d3d-97f5-48f3-8e96-1f336ca422b2",
+      "name": "Get the input",
+      "webhookId": "d60338cb-f796-43e4-8010-6e28a90a5249"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "74fbad80-d2cf-4d32-a28d-b73b41e87932",
+              "leftValue": "={{ $json.file }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -624,
+        -176
+      ],
+      "id": "63eb05bf-6409-45aa-a82d-608f20c5d514",
+      "name": "Checking Doc/Text"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "66c0434a-e66b-4f91-a080-92c2813d4c39",
+              "name": "input_text",
+              "value": "={{ $json['Paste Your Text'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        -240
+      ],
+      "id": "2a081339-fc0b-4d3c-8978-6b343d9233f9",
+      "name": "It's Text"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c92cb833-f9e9-4444-913c-c4fa53511257",
+              "name": "Text",
+              "value": "={{ $('Generating MCQs').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        -240
+      ],
+      "id": "385c871c-4366-4d49-85c4-58641c3319cb",
+      "name": "Something...."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=text : {{$json.Text}}\n\nPdf url : {{ $('Generating Pdf').item.json.Files[0].Url }}",
+        "options": {
+          "systemMessage": "=You are an MCQ to HTML Quiz Generator. Your task is to convert MCQ questions from text format into a beautiful, interactive HTML quiz page.\n\nINPUT FORMAT:\nThe user will provide MCQ questions in this format:\nTest: [Quiz Title]\n(Based on: [source])\n\nQuestion text here?\nA) Option 1\nB) Option 2\nC) Option 3\nD) Option 4\nNext question?\nA) Option 1\nB) Option 2\nC) Option 3\nD) Option 4\n\nAnswer Key\n\nA\nC\n\n\nYOUR TASK:\n1. Parse the MCQ text to extract:\n   - Quiz title\n   - All questions with their 4 options\n   - Correct answers from the answer key\n\n2. Generate a complete, self-contained HTML file with:\n   - Modern, responsive design with gradient backgrounds\n   - Purple/violet color scheme (#667eea, #764ba2)\n   - One question displayed at a time\n   - Progress bar showing quiz completion\n   - Interactive options with hover effects\n   - Instant feedback (green for correct, red for incorrect)\n   - \"Next Question\" button after answering\n   \n3. After all questions, show a comprehensive dashboard with:\n   - Large animated score circle\n   - Three stat cards: Correct answers, Incorrect answers, Percentage score\n   - Performance message based on score:\n     * 90%+ : \"🌟 Outstanding! You're a true expert!\"\n     * 70-89%: \"👍 Great job! You have a solid understanding!\"\n     * 50-69%: \"💪 Good effort! Keep learning and improving!\"\n     * Below 50%: \"📚 Keep studying! Practice makes perfect!\"\n   - Complete question review showing:\n     * Each question with user's answer vs correct answer\n     * Green background for correct, red for incorrect\n     * ✅ or ❌ indicator\n   - Restart quiz button\n\nDESIGN REQUIREMENTS:\n- Mobile responsive (works on all screen sizes)\n- Smooth animations and transitions\n- Clean, modern UI with rounded corners\n- Box shadows for depth\n- Emoji icons for visual appeal\n- No external dependencies (all CSS/JS embedded)\n\nOUTPUT:\nProvide only the complete HTML code, ready to save as a .html file and open in any browser. Include all CSS styles in <style> tags and all JavaScript in <script> tags.\n\nYour only response should be the complete HTML code. Start with <!DOCTYPE html> and end with </html>.\n\nAnd don't add this \"```html\" in entire code\n\nIMPORTANT:\n- Handle any number of questions (not just 15)\n- Parse questions even if formatting varies slightly\n- Make sure all options are properly displayed\n- Ensure the quiz is fully functional with no errors\n\n**Note** And the user will also give you a download link of a PDF, you have to embed its HTML code, when the user completes the test then there should be a download button above the result and the URL of the PDF should be embedded in it so that it gets downloaded by tapping on download.\n\n\n**Example code**  \n\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Etsy T-shirt Business Strategy Quiz</title>\n    <style>\n        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');\n\n        :root {\n            --primary-bg-start: #667eea;\n            --primary-bg-end: #764ba2;\n            --container-bg: #ffffff;\n            --text-color: #333;\n            --heading-color: #4a0e7e;\n            --option-bg: #f0f4f8;\n            --option-hover-bg: #e2e8f0;\n            --option-border: #d1d9e6;\n            --button-bg: #764ba2;\n            --button-hover-bg: #5f3a82;\n            --button-text: #fff;\n            --progress-bar-bg: #8c71d8;\n            --progress-container-bg: #e0e0e0;\n            --correct-color: #4CAF50; /* Green */\n            --incorrect-color: #f44336; /* Red */\n            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);\n            --shadow-dark: 0 8px 25px rgba(0, 0, 0, 0.2);\n            --border-radius: 12px;\n            --stat-card-bg: #f9f9f9;\n        }\n\n        body {\n            font-family: 'Poppins', sans-serif;\n            margin: 0;\n            padding: 20px;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            min-height: 100vh;\n            background: linear-gradient(135deg, var(--primary-bg-start), var(--primary-bg-end));\n            color: var(--text-color);\n            line-height: 1.6;\n            box-sizing: border-box;\n        }\n\n        #quiz-container, #results-container {\n            background: var(--container-bg);\n            border-radius: var(--border-radius);\n            box-shadow: var(--shadow-dark);\n            padding: 30px;\n            max-width: 800px;\n            width: 100%;\n            text-align: center;\n            animation: fadeIn 0.8s ease-out;\n            box-sizing: border-box;\n        }\n\n        @keyframes fadeIn {\n            from { opacity: 0; transform: translateY(20px); }\n            to { opacity: 1; transform: translateY(0); }\n        }\n\n        h1, h2 {\n            color: var(--heading-color);\n            margin-bottom: 15px;\n            font-weight: 700;\n        }\n\n        p {\n            margin-bottom: 20px;\n        }\n\n        #quiz-source {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: -10px;\n            margin-bottom: 25px;\n        }\n\n        #progress-container {\n            width: 100%;\n            height: 10px;\n            background-color: var(--progress-container-bg);\n            border-radius: 5px;\n            margin-bottom: 25px;\n            overflow: hidden;\n            position: relative;\n        }\n\n        #progress-bar {\n            height: 100%;\n            width: 0%;\n            background-color: var(--progress-bar-bg);\n            border-radius: 5px;\n            transition: width 0.4s ease-in-out;\n        }\n\n        #progress-text {\n            position: absolute;\n            top: -25px;\n            right: 0;\n            font-size: 0.8em;\n            color: #555;\n        }\n\n        #question-card {\n            background: #fdfdfd;\n            border: 1px solid var(--option-border);\n            border-radius: var(--border-radius);\n            padding: 25px;\n            margin-bottom: 25px;\n            box-shadow: var(--shadow-light);\n            text-align: left;\n            min-height: 120px;\n            display: flex;\n            flex-direction: column;\n            justify-content: center;\n            animation: slideIn 0.5s ease-out;\n        }\n\n        @keyframes slideIn {\n            from { opacity: 0; transform: translateX(-20px); }\n            to { opacity: 1; transform: translateX(0); }\n        }\n\n        #question-text {\n            font-size: 1.25em;\n            font-weight: 600;\n            margin-bottom: 25px;\n            color: var(--heading-color);\n        }\n\n        #options-container {\n            display: grid;\n            grid-template-columns: 1fr;\n            gap: 15px;\n        }\n\n        .option-btn {\n            background: var(--option-bg);\n            border: 1px solid var(--option-border);\n            border-radius: var(--border-radius);\n            padding: 15px 20px;\n            font-size: 1em;\n            color: var(--text-color);\n            cursor: pointer;\n            transition: all 0.3s ease;\n            text-align: left;\n            display: flex;\n            align-items: center;\n        }\n\n        .option-btn:hover:not(.selected):not(.correct):not(.incorrect) {\n            background-color: var(--option-hover-bg);\n            border-color: var(--primary-bg-start);\n            transform: translateY(-2px);\n            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n        }\n\n        .option-btn.selected {\n            border-color: var(--button-bg);\n            box-shadow: var(--shadow-light);\n        }\n\n        .option-btn.correct {\n            background-color: var(--correct-color);\n            color: white;\n            border-color: var(--correct-color);\n            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);\n            pointer-events: none;\n        }\n\n        .option-btn.incorrect {\n            background-color: var(--incorrect-color);\n            color: white;\n            border-color: var(--incorrect-color);\n            box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);\n            pointer-events: none;\n        }\n\n        .option-btn.disabled {\n            pointer-events: none;\n            opacity: 0.7;\n        }\n\n        .option-prefix {\n            font-weight: 600;\n            margin-right: 10px;\n            min-width: 20px;\n        }\n\n        button {\n            background-color: var(--button-bg);\n            color: var(--button-text);\n            border: none;\n            border-radius: var(--border-radius);\n            padding: 12px 25px;\n            font-size: 1.1em;\n            cursor: pointer;\n            transition: background-color 0.3s ease, transform 0.2s ease;\n            margin-top: 25px;\n            box-shadow: var(--shadow-light);\n            font-weight: 600;\n        }\n\n        button:hover:not(:disabled) {\n            background-color: var(--button-hover-bg);\n            transform: translateY(-2px);\n        }\n\n        button:disabled {\n            background-color: #ccc;\n            cursor: not-allowed;\n            box-shadow: none;\n        }\n\n        .hidden {\n            display: none;\n        }\n\n        /* Results Container */\n        #results-container {\n            padding: 40px;\n        }\n\n        #score-summary {\n            display: flex;\n            flex-wrap: wrap;\n            justify-content: center;\n            gap: 30px;\n            margin-top: 30px;\n            margin-bottom: 40px;\n        }\n\n        #score-circle {\n            width: 150px;\n            height: 150px;\n            border-radius: 50%;\n            background: conic-gradient(var(--correct-color) 0% var(--score-percentage, 0%), var(--progress-container-bg) var(--score-percentage, 0%) 100%);\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            font-size: 2.5em;\n            font-weight: 700;\n            color: var(--heading-color);\n            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1), var(--shadow-light);\n            position: relative;\n            margin-bottom: 20px;\n        }\n\n        #score-circle::before {\n            content: '';\n            position: absolute;\n            width: 120px;\n            height: 120px;\n            background-color: var(--container-bg);\n            border-radius: 50%;\n            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);\n        }\n        #score-circle span {\n            position: relative;\n            z-index: 1;\n        }\n\n\n        .stat-card {\n            background: var(--stat-card-bg);\n            border-radius: var(--border-radius);\n            padding: 20px;\n            box-shadow: var(--shadow-light);\n            flex: 1;\n            min-width: 180px;\n            max-width: 220px;\n            text-align: center;\n            display: flex;\n            flex-direction: column;\n            justify-content: center;\n            align-items: center;\n        }\n\n        .stat-card h3 {\n            margin: 0 0 10px 0;\n            font-size: 1.1em;\n            color: var(--heading-color);\n        }\n\n        .stat-card p {\n            font-size: 1.8em;\n            font-weight: 700;\n            margin: 0;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n        .stat-card p.correct-stat { color: var(--correct-color); }\n        .stat-card p.incorrect-stat { color: var(--incorrect-color); }\n        .stat-card p.percentage-stat { color: var(--button-bg); }\n\n\n        #performance-message {\n            font-size: 1.3em;\n            font-weight: 600;\n            margin-top: 30px;\n            margin-bottom: 40px;\n            color: var(--heading-color);\n            background: #e9e2f0;\n            padding: 15px;\n            border-radius: var(--border-radius);\n            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);\n        }\n\n        #review-container {\n            margin-top: 50px;\n            text-align: left;\n            border-top: 1px solid #eee;\n            padding-top: 30px;\n        }\n\n        #review-container h3 {\n            font-size: 1.5em;\n            color: var(--heading-color);\n            margin-bottom: 25px;\n        }\n\n        .review-item {\n            background: #fff;\n            border: 1px solid var(--option-border);\n            border-radius: var(--border-radius);\n            padding: 20px;\n            margin-bottom: 20px;\n            box-shadow: var(--shadow-light);\n        }\n\n        .review-item.correct {\n            background-color: #e6ffe6;\n            border-color: var(--correct-color);\n        }\n\n        .review-item.incorrect {\n            background-color: #ffe6e6;\n            border-color: var(--incorrect-color);\n        }\n\n        .review-item p {\n            margin: 0 0 10px 0;\n            font-size: 1.1em;\n            font-weight: 600;\n            color: #333;\n        }\n\n        .review-item .options {\n            margin-top: 10px;\n        }\n\n        .review-item .option {\n            padding: 8px 12px;\n            margin-bottom: 5px;\n            border-radius: 8px;\n            font-size: 0.95em;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n\n        .review-item .option.user-selected {\n            font-weight: bold;\n            background-color: #e0e7f7;\n            border: 1px solid #a9b9e6;\n        }\n        .review-item .option.user-selected.correct-answer {\n            background-color: var(--correct-color);\n            color: white;\n            border-color: var(--correct-color);\n        }\n        .review-item .option.user-selected.incorrect-answer {\n            background-color: var(--incorrect-color);\n            color: white;\n            border-color: var(--incorrect-color);\n        }\n        .review-item .option.correct-answer-display {\n             background-color: #d4edda;\n             border: 1px solid #c3e6cb;\n             font-weight: bold;\n             color: #155724;\n        }\n        .review-item .option.incorrect-user-selected { /* This is for the option user chose, when it was incorrect */\n             background-color: #f8d7da;\n             border: 1px solid #f5c6cb;\n             font-weight: bold;\n             color: #721c24;\n        }\n\n\n        /* Media Queries for Responsiveness */\n        @media (max-width: 768px) {\n            body {\n                padding: 15px;\n            }\n            #quiz-container, #results-container {\n                padding: 20px;\n            }\n            #question-text {\n                font-size: 1.1em;\n            }\n            .option-btn {\n                padding: 12px 15px;\n                font-size: 0.95em;\n            }\n            button {\n                padding: 10px 20px;\n                font-size: 1em;\n            }\n            #score-summary {\n                flex-direction: column;\n                gap: 20px;\n            }\n            .stat-card {\n                min-width: unset;\n                max-width: 100%;\n            }\n            #score-circle {\n                margin: 0 auto 30px auto; /* Center the circle */\n            }\n        }\n\n        @media (max-width: 480px) {\n            h1 {\n                font-size: 1.8em;\n            }\n            #quiz-source {\n                font-size: 0.8em;\n            }\n            #question-text {\n                font-size: 1em;\n            }\n            .option-btn {\n                font-size: 0.9em;\n            }\n            #score-circle {\n                width: 120px;\n                height: 120px;\n                font-size: 2em;\n            }\n            #score-circle::before {\n                width: 96px;\n                height: 96px;\n            }\n            .stat-card p {\n                font-size: 1.5em;\n            }\n            #performance-message {\n                font-size: 1.1em;\n            }\n            .review-item p {\n                font-size: 1em;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div id=\"quiz-container\">\n        <div id=\"quiz-header\">\n            <h1 id=\"quiz-title\"></h1>\n            <p id=\"quiz-source\"></p>\n        </div>\n        <div id=\"progress-container\">\n            <div id=\"progress-bar\"></div>\n            <span id=\"progress-text\"></span>\n        </div>\n        <div id=\"question-card\">\n            <p id=\"question-text\"></p>\n            <div id=\"options-container\"></div>\n        </div>\n        <button id=\"next-button\" disabled>Next Question</button>\n    </div>\n\n    <div id=\"results-container\" class=\"hidden\">\n        <h2>Quiz Results 🎉</h2>\n        <div id=\"score-summary\">\n            <div id=\"score-circle\"><span>0%</span></div>\n            <div class=\"stat-card\">\n                <h3>Correct Answers ✅</h3>\n                <p id=\"correct-answers\" class=\"correct-stat\">0</p>\n            </div>\n            <div class=\"stat-card\">\n                <h3>Incorrect Answers ❌</h3>\n                <p id=\"incorrect-answers\" class=\"incorrect-stat\">0</p>\n            </div>\n            <div class=\"stat-card\">\n                <h3>Percentage Score 📊</h3>\n                <p id=\"percentage-score\" class=\"percentage-stat\">0%</p>\n            </div>\n        </div>\n        <p id=\"performance-message\"></p>\n        <div id=\"review-container\">\n            <h3>Question Review 🤔</h3>\n            <div id=\"review-list\"></div>\n        </div>\n        <button id=\"restart-button\">Restart Quiz</button>\n    </div>\n\n    <script>\n        const quizTitle = \"Etsy T-shirt Business Strategy\";\n        const quizSource = \"ventureAi_Roadmap (6).pdf\";\n\n        const quizData = [\n            {\n                question: \"The core skill identified for individuals pursuing this business idea is:\",\n                options: [\"T-shirt designing\", \"Financial planning\", \"Marketing analysis\", \"Customer service\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"What is the initial financial goal for the business owner, as stated in the report?\",\n                options: [\"$500/month\", \"$1k/month\", \"$2k/month\", \"$1.5k/month\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"The report states that the current team size for this venture is:\",\n                options: [\"2\", \"3\", \"1\", \"4\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"How is the \\\"target market: all\\\" described in the strategic report?\",\n                options: [\"A minor oversight\", \"An acceptable challenge\", \"A sustainable approach\", \"A critical strategic misstep\"],\n                correctAnswer: \"D\"\n            },\n            {\n                question: \"In 2023, the global print-on-demand (POD) market was valued at approximately:\",\n                options: [\"$6 billion\", \"$5 billion\", \"$7 billion\", \"$8 billion\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"How many active buyers did Etsy reach in 2023?\",\n                options: [\"Nearly 50 million\", \"Nearly 90 million\", \"Nearly 70 million\", \"Over 100 million\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"Current market trends for Etsy t-shirts heavily lean towards:\",\n                options: [\"Generic designs\", \"Broad appeal products\", \"Highly specific niches\", \"Mass-produced items\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"Successful Etsy sellers are noted to thrive by targeting:\",\n                options: [\"Specific demographics\", \"All potential customers\", \"Undefined groups\", \"Broad demographics\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"What is the Etsy listing fee per listing, as stated in the report?\",\n                options: [\"$0.10 USD\", \"$0.20 USD\", \"$0.30 USD\", \"$0.40 USD\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"The total estimated startup costs for the initial 1-3 months are in which range?\",\n                options: [\"$100 - $200 USD\", \"$50 - $100 USD\", \"$70 - $180 USD\", \"$200 - $300 USD\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"What is the typical Print-on-Demand (POD) cost per t-shirt mentioned?\",\n                options: [\"$5 - $8 USD\", \"$15 - $20 USD\", \"$20 - $25 USD\", \"$10 - $15 USD\"],\n                correctAnswer: \"D\"\n            },\n            {\n                question: \"The Etsy transaction fee is calculated as 6.5% of the item price plus shipping. Which option represents this percentage?\",\n                options: [\"6.5%\", \"3.5%\", \"9.5%\", \"12.5%\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"On a $25 USD t-shirt, after POD and Etsy fees, the gross profit per item is around:\",\n                options: [\"$7.17 USD\", \"$9.17 USD\", \"$11.17 USD\", \"$5.00 USD\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"To achieve $1,000 USD in profit, approximately how many t-shirts need to be sold per month?\",\n                options: [\"75 t-shirts\", \"50 t-shirts\", \"109 t-shirts\", \"150 t-shirts\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"Phase 1 of the roadmap, \\\"Niche & Market Validation,\\\" is scheduled for which duration?\",\n                options: [\"Weeks 3-4\", \"Months 2-3\", \"Weeks 5-6\", \"Weeks 1-2\"],\n                correctAnswer: \"D\"\n            }\n        ];\n\n        let currentQuestionIndex = 0;\n        let score = 0;\n        let userAnswers = []; // Stores { questionIndex, selectedOptionIndex, isCorrect }\n        let selectedOptionForCurrentQuestion = null; // To prevent multiple selections\n\n        const quizContainer = document.getElementById('quiz-container');\n        const resultsContainer = document.getElementById('results-container');\n        const quizTitleElement = document.getElementById('quiz-title');\n        const quizSourceElement = document.getElementById('quiz-source');\n        const progressBar = document.getElementById('progress-bar');\n        const progressText = document.getElementById('progress-text');\n        const questionTextElement = document.getElementById('question-text');\n        const optionsContainer = document.getElementById('options-container');\n        const nextButton = document.getElementById('next-button');\n        const scoreCircleText = document.querySelector('#score-circle span');\n        const correctAnswersElement = document.getElementById('correct-answers');\n        const incorrectAnswersElement = document.getElementById('incorrect-answers');\n        const percentageScoreElement = document.getElementById('percentage-score');\n        const performanceMessageElement = document.getElementById('performance-message');\n        const reviewList = document.getElementById('review-list');\n        const restartButton = document.getElementById('restart-button');\n        const scoreCircle = document.getElementById('score-circle');\n\n\n        function initQuiz() {\n            quizTitleElement.textContent = quizTitle;\n            quizSourceElement.textContent = `(Based on: ${quizSource})`;\n            quizContainer.classList.remove('hidden');\n            resultsContainer.classList.add('hidden');\n            currentQuestionIndex = 0;\n            score = 0;\n            userAnswers = [];\n            selectedOptionForCurrentQuestion = null;\n            nextButton.disabled = true;\n            loadQuestion();\n            updateProgressBar();\n        }\n\n        function loadQuestion() {\n            if (currentQuestionIndex >= quizData.length) {\n                showResults();\n                return;\n            }\n\n            const currentQuestion = quizData[currentQuestionIndex];\n            questionTextElement.textContent = `${currentQuestionIndex + 1}. ${currentQuestion.question}`;\n            optionsContainer.innerHTML = '';\n            selectedOptionForCurrentQuestion = null;\n            nextButton.disabled = true;\n\n            const optionLetters = ['A', 'B', 'C', 'D'];\n            currentQuestion.options.forEach((option, index) => {\n                const button = document.createElement('button');\n                button.classList.add('option-btn');\n                button.innerHTML = `<span class=\"option-prefix\">${optionLetters[index]})</span> ${option}`;\n                button.addEventListener('click', () => selectOption(index, button));\n                optionsContainer.appendChild(button);\n            });\n\n            updateProgressBar();\n            // Trigger animation\n            questionTextElement.parentElement.style.animation = 'none';\n            void questionTextElement.parentElement.offsetWidth; // Trigger reflow\n            questionTextElement.parentElement.style.animation = 'slideIn 0.5s ease-out';\n        }\n\n        function selectOption(selectedIndex, selectedButton) {\n            if (selectedOptionForCurrentQuestion !== null) {\n                return; // Already selected an option for this question\n            }\n\n            selectedOptionForCurrentQuestion = selectedIndex;\n            const currentQuestion = quizData[currentQuestionIndex];\n            const correctOptionLetter = currentQuestion.correctAnswer;\n            const correctOptionIndex = correctOptionLetter.charCodeAt(0) - 'A'.charCodeAt(0);\n\n            const isCorrect = (selectedIndex === correctOptionIndex);\n\n            // Store user's answer\n            userAnswers.push({\n                questionIndex: currentQuestionIndex,\n                selectedOptionIndex: selectedIndex,\n                isCorrect: isCorrect\n            });\n\n            // Apply feedback to all options\n            Array.from(optionsContainer.children).forEach((button, index) => {\n                button.classList.add('disabled'); // Disable all options\n                if (index === correctOptionIndex) {\n                    button.classList.add('correct'); // Mark correct answer\n                } else if (index === selectedIndex) {\n                    button.classList.add('incorrect'); // Mark user's incorrect answer\n                }\n            });\n\n            if (isCorrect) {\n                score++;\n                selectedButton.classList.add('correct');\n            } else {\n                selectedButton.classList.add('incorrect');\n            }\n\n            nextButton.disabled = false;\n        }\n\n        function updateProgressBar() {\n            const progressPercentage = (currentQuestionIndex / quizData.length) * 100;\n            progressBar.style.width = `${progressPercentage}%`;\n            progressText.textContent = `Question ${currentQuestionIndex} of ${quizData.length}`;\n            if (currentQuestionIndex === 0) {\n                progressText.textContent = `Question 1 of ${quizData.length}`;\n            }\n        }\n\n        function showResults() {\n            quizContainer.classList.add('hidden');\n            resultsContainer.classList.remove('hidden');\n\n            const correct = userAnswers.filter(answer => answer.isCorrect).length;\n            const incorrect = userAnswers.filter(answer => !answer.isCorrect).length;\n            const totalQuestions = quizData.length;\n            const percentage = totalQuestions > 0 ? (correct / totalQuestions) * 100 : 0;\n\n            correctAnswersElement.textContent = correct;\n            incorrectAnswersElement.textContent = incorrect;\n            \n            // Animate score circle percentage\n            let currentScore = 0;\n            const scoreAnimationInterval = setInterval(() => {\n                if (currentScore >= percentage) {\n                    clearInterval(scoreAnimationInterval);\n                    scoreCircleText.textContent = `${Math.round(percentage)}%`;\n                } else {\n                    currentScore++;\n                    scoreCircleText.textContent = `${currentScore}%`;\n                }\n            }, 20); // Adjust speed for animation\n\n            percentageScoreElement.textContent = `${Math.round(percentage)}%`;\n\n            let performanceMessage = '';\n            if (percentage >= 90) {\n                performanceMessage = \"🌟 Outstanding! You're a true expert!\";\n                scoreCircle.style.setProperty('--score-color', '#4CAF50'); // Green\n            } else if (percentage >= 70) {\n                performanceMessage = \"👍 Great job! You have a solid understanding!\";\n                 scoreCircle.style.setProperty('--score-color', '#76ba4b'); // Light Green\n            } else if (percentage >= 50) {\n                performanceMessage = \"💪 Good effort! Keep learning and improving!\";\n                 scoreCircle.style.setProperty('--score-color', '#ffc107'); // Yellow\n            } else {\n                performanceMessage = \"📚 Keep studying! Practice makes perfect!\";\n                 scoreCircle.style.setProperty('--score-color', '#f44336'); // Red\n            }\n            performanceMessageElement.textContent = performanceMessage;\n            scoreCircle.style.setProperty('--score-percentage', `${percentage}%`);\n\n            // Populate review section\n            reviewList.innerHTML = '';\n            const optionLetters = ['A', 'B', 'C', 'D'];\n\n            userAnswers.forEach((userAnswer, index) => {\n                const question = quizData[userAnswer.questionIndex];\n                const reviewItem = document.createElement('div');\n                reviewItem.classList.add('review-item');\n                reviewItem.classList.add(userAnswer.isCorrect ? 'correct' : 'incorrect');\n\n                reviewItem.innerHTML = `\n                    <p>${userAnswer.questionIndex + 1}. ${question.question}</p>\n                    <div class=\"options\"></div>\n                `;\n                const optionsDiv = reviewItem.querySelector('.options');\n\n                question.options.forEach((optionText, optionIndex) => {\n                    const optionElement = document.createElement('div');\n                    optionElement.classList.add('option');\n                    optionElement.textContent = `${optionLetters[optionIndex]}) ${optionText}`;\n\n                    const correctOptionLetter = question.correctAnswer;\n                    const correctOptionIndex = correctOptionLetter.charCodeAt(0) - 'A'.charCodeAt(0);\n\n                    if (optionIndex === userAnswer.selectedOptionIndex) {\n                        optionElement.classList.add('user-selected');\n                        if (userAnswer.isCorrect) {\n                            optionElement.classList.add('correct-answer');\n                            optionElement.innerHTML += ' ✅';\n                        } else {\n                            optionElement.classList.add('incorrect-answer');\n                            optionElement.innerHTML += ' ❌';\n                        }\n                    }\n\n                    if (optionIndex === correctOptionIndex && optionIndex !== userAnswer.selectedOptionIndex) {\n                        optionElement.classList.add('correct-answer-display');\n                        optionElement.innerHTML += ' (Correct Answer)';\n                    }\n                     if (optionIndex === userAnswer.selectedOptionIndex && optionIndex !== correctOptionIndex) {\n                         optionElement.classList.add('incorrect-user-selected');\n                    }\n\n\n                    optionsDiv.appendChild(optionElement);\n                });\n                reviewList.appendChild(reviewItem);\n            });\n        }\n\n        nextButton.addEventListener('click', () => {\n            currentQuestionIndex++;\n            loadQuestion();\n        });\n\n        restartButton.addEventListener('click', initQuiz);\n\n        // Initialize the quiz when the page loads\n        initQuiz();\n    </script>\n</body>\n</html>\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        800,
+        -240
+      ],
+      "id": "c41bc703-ef9a-4dfd-b76c-90cf5cf86465",
+      "name": "Wait a minute....."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4e0023a9-7b09-4520-8505-38af6ac96b2b",
+              "name": "html_content",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        -208
+      ],
+      "id": "cd8a21d9-293a-49b9-959d-2e0ca931e5e4",
+      "name": "Thanks (:"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4e0023a9-7b09-4520-8505-38af6ac96b2b",
+              "name": "html_content",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        80
+      ],
+      "id": "dbc352d5-fd04-448b-9478-e4201e6a72d0",
+      "name": "Thanks ):"
+    },
+    {
+      "parameters": {
+        "jsCode": "// === Step 1: Input Data aur Error Handling ===\nconst rawText = $input.item?.json?.output;\nif (!rawText) {\n  return { \n    json: { \n      error: \"Input text nahi mila. Path check karein: item.json.output\" \n    } \n  };\n}\nif (typeof rawText !== 'string') {\n  return { \n    json: { \n      error: \"Input data ek string nahi hai. Mila: \" + typeof rawText \n    } \n  };\n}\n\n// === Step 2: HTML Generation ===\nconst lines = rawText.split('\\n');\nlet htmlContent = \"\";\nlet isAnswerKey = false; \n\nfor (const line of lines) {\n    let trimmedLine = line.trim();\n    if (trimmedLine.length === 0) continue;\n    \n    // Skip \"(Based on the provided text)\" line\n    if (trimmedLine.includes('Based on the provided text')) {\n        continue;\n    }\n    \n    // Check for \"## Test:\" heading\n    if (trimmedLine.startsWith('## Test:')) {\n        htmlContent += `<h1>${trimmedLine.substring(3).trim()}</h1>\\n`;\n    } \n    // Check for \"## Answer Key\" heading\n    else if (trimmedLine.startsWith('## Answer Key')) {\n        isAnswerKey = true;\n        htmlContent += '<hr>\\n';\n        htmlContent += `<h2>${trimmedLine.substring(3).trim()}</h2>\\n`;\n    }\n    // Skip \"---\" lines\n    else if (trimmedLine === '---') {\n        continue;\n    }\n    // Handle answer key items (number with bold letter)\n    else if (isAnswerKey && trimmedLine.match(/^\\d+\\.\\s+\\*\\*/)) {\n        let styledLine = trimmedLine.replace(/\\*\\*(.*?)\\*\\*/g, '<span class=\"answer-letter\">$1</span>');\n        htmlContent += `<p class=\"answer-key-item\">${styledLine}</p>\\n`;\n    } \n    // Handle questions (starts with number and has **)\n    else if (trimmedLine.match(/^\\d+\\.\\s+\\*\\*/)) {\n        let styledLine = trimmedLine.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');\n        htmlContent += `<p class=\"item\">${styledLine}</p>\\n`;\n    } \n    // Handle options (starts with spaces and A), B), C), D))\n    else if (trimmedLine.match(/^[A-D]\\)/)) {\n        htmlContent += `<p class=\"option\">${trimmedLine}</p>\\n`;\n    }\n}\n\n// === Step 3: Complete HTML with CSS ===\nconst fullHtml = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>MCQ Test</title>\n    <style>\n        body { \n            font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; \n            margin: 40px auto; \n            max-width: 850px; \n            padding: 25px; \n            border: 1px solid #eee; \n            border-radius: 10px; \n            box-shadow: 0 5px 15px rgba(0,0,0,0.05); \n            background-color: #ffffff; \n            color: #222; \n            font-size: 18px; \n            line-height: 1.7; \n        }\n        h1 { \n            font-size: 2.2em; \n            color: #2c3e50; \n            border-bottom: 2px solid #ecf0f1; \n            padding-bottom: 10px; \n            text-align: center; \n            margin-bottom: 30px; \n        }\n        h2 { \n            font-size: 1.8em; \n            color: #2980b9; \n            margin-top: 30px; \n            border-bottom: 1px solid #ddd; \n            padding-bottom: 5px; \n            text-align: center; \n            margin-bottom: 25px; \n        }\n        hr { \n            border: 0; \n            height: 2px; \n            background: linear-gradient(to right, transparent, #e0e0e0, transparent); \n            margin: 40px 0; \n        }\n        p { \n            margin: 12px 0; \n        }\n        .item { \n            font-size: 1.1em; \n            font-weight: 500; \n            margin-top: 30px; \n            margin-bottom: 12px; \n            color: #000; \n            line-height: 1.6;\n        }\n        .item strong { \n            color: #000; \n            font-weight: 600; \n        }\n        .option { \n            padding-left: 40px; \n            font-size: 1.05em; \n            color: #444; \n            margin: 6px 0; \n            line-height: 1.5;\n        }\n        .answer-key-item { \n            font-size: 1.15em; \n            font-weight: 600; \n            color: #333; \n            margin: 10px 0; \n            margin-left: 20px; \n        }\n        .answer-key-item .answer-letter { \n            background-color: #28a745; \n            color: white;\n            padding: 4px 12px; \n            border-radius: 4px; \n            font-weight: 700;\n            margin-left: 8px;\n        }\n    </style>\n</head>\n<body>\n${htmlContent}\n</body>\n</html>`;\n\n// === Step 4: Buffer mein convert karo ===\nconst fileBuffer = Buffer.from(fullHtml, 'utf8');\n\n// === Step 5: Binary file return karo ===\nreturn {\n  json: {},\n  binary: {\n    data: await this.helpers.prepareBinaryData(\n      fileBuffer,\n      'mcq_test.html',\n      'text/html'\n    )\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        -240
+      ],
+      "id": "7069cdd5-76a3-4117-ab97-d6ce1a5af4e0",
+      "name": "Designing-HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "// === Step 1: Input Data aur Error Handling ===\nconst rawText = $input.item?.json?.content?.parts?.[0]?.text;\nif (!rawText) {\n  return { \n    json: { \n      error: \"Input text nahi mila. Path check karein: item.json.content.parts[0].text\" \n    } \n  };\n}\nif (typeof rawText !== 'string') {\n  return { \n    json: { \n      error: \"Input data ek string nahi hai. Mila: \" + typeof rawText \n    } \n  };\n}\n\n// === Step 2: HTML Generation ===\nconst lines = rawText.split('\\n');\nlet htmlContent = \"\";\nlet isAnswerKey = false; \n\nfor (const line of lines) {\n    let trimmedLine = line.trim();\n    if (trimmedLine.length === 0) continue;\n    \n    // Skip \"(Based on...)\" line\n    if (trimmedLine.startsWith('(Based on')) {\n        continue;\n    }\n    \n    if (trimmedLine.startsWith('## Test:')) {\n        htmlContent += `<h1>${trimmedLine.substring(3).trim()}</h1>\\n`;\n    } \n    else if (trimmedLine.startsWith('## Answer Key')) {\n        isAnswerKey = true;\n        htmlContent += `<h2>${trimmedLine.substring(3).trim()}</h2>\\n`;\n    }\n    else if (trimmedLine.startsWith('---')) {\n        htmlContent += '<hr>\\n';\n    }\n    else if (isAnswerKey) {\n        if (trimmedLine.match(/^\\d+\\.\\s+\\*\\*/)) {\n            let styledLine = trimmedLine.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');\n            htmlContent += `<p class=\"answer-key-item\">${styledLine}</p>\\n`;\n        }\n    } \n    else {\n        if (trimmedLine.match(/^\\d+\\.\\s+\\*\\*/)) {\n            let styledLine = trimmedLine.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');\n            htmlContent += `<p class=\"item\">${styledLine}</p>\\n`;\n        } \n        else if (trimmedLine.match(/^[A-Z]\\)/)) {\n            htmlContent += `<p class=\"option\">${trimmedLine}</p>\\n`;\n        }\n        else if (trimmedLine.startsWith('(')) {\n            htmlContent += `<p class=\"intro-text\">${trimmedLine}</p>\\n`;\n        }\n    }\n}\n\n// === Step 3: Complete HTML with CSS ===\nconst fullHtml = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>MCQ Test</title>\n    <style>\n        body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; margin: 40px auto; max-width: 850px; padding: 25px; border: 1px solid #eee; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); background-color: #ffffff; color: #222; font-size: 18px; line-height: 1.7; }\n        .mime-info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #dee2e6; }\n        .mime-info span { font-weight: bold; color: #495057; }\n        h1 { font-size: 2.2em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; text-align: center; margin-bottom: 30px; }\n        h2 { font-size: 1.8em; color: #2980b9; margin-top: 50px; border-bottom: 1px solid #ddd; padding-bottom: 5px; text-align: center; margin-bottom: 25px; }\n        hr { border: 0; height: 1px; background: #e0e0e0; margin: 40px 0; }\n        p { margin: 12px 0; }\n        .intro-text { text-align: center; font-style: italic; color: #555; }\n        .item { font-size: 1.1em; font-weight: 500; margin-top: 30px; color: #000; }\n        .item strong { color: #000; font-weight: 700; }\n        .option { padding-left: 30px; font-size: 1.05em; color: #444; margin-left: 15px; }\n        .answer-key-item { font-size: 1.1em; font-weight: bold; color: #28a745; margin-bottom: 10px; margin-left: 20px; }\n        .answer-key-item strong { background-color: #e6ffed; padding: 2px 6px; border-radius: 4px; }\n    </style>\n</head>\n<body>\n    \n    </div>\n    ${htmlContent}\n</body>\n</html>`;\n\n// === Step 4: Buffer mein convert karo ===\nconst fileBuffer = Buffer.from(fullHtml, 'utf8');\n\n// === Step 5: Binary file return karo ===\nreturn {\n  json: {},\n  binary: {\n    data: await this.helpers.prepareBinaryData(\n      fileBuffer,\n      'mcq_test.html',\n      'text/html'\n    )\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -16
+      ],
+      "id": "6b600f60-dc75-437c-b4b2-c631245f800f",
+      "name": "Designing-HTML."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=text : {{$json.Text}}\n\nPdf url : {{ $('Generating Pdf1').item.json.Files[0].Url }}",
+        "options": {
+          "systemMessage": "=You are an MCQ to HTML Quiz Generator. Your task is to convert MCQ questions from text format into a beautiful, interactive HTML quiz page.\n\nINPUT FORMAT:\nThe user will provide MCQ questions in this format:\nTest: [Quiz Title]\n(Based on: [source])\n\nQuestion text here?\nA) Option 1\nB) Option 2\nC) Option 3\nD) Option 4\nNext question?\nA) Option 1\nB) Option 2\nC) Option 3\nD) Option 4\n\nAnswer Key\n\nA\nC\n\n\nYOUR TASK:\n1. Parse the MCQ text to extract:\n   - Quiz title\n   - All questions with their 4 options\n   - Correct answers from the answer key\n\n2. Generate a complete, self-contained HTML file with:\n   - Modern, responsive design with gradient backgrounds\n   - Purple/violet color scheme (#667eea, #764ba2)\n   - One question displayed at a time\n   - Progress bar showing quiz completion\n   - Interactive options with hover effects\n   - Instant feedback (green for correct, red for incorrect)\n   - \"Next Question\" button after answering\n   \n3. After all questions, show a comprehensive dashboard with:\n   - Large animated score circle\n   - Three stat cards: Correct answers, Incorrect answers, Percentage score\n   - Performance message based on score:\n     * 90%+ : \"🌟 Outstanding! You're a true expert!\"\n     * 70-89%: \"👍 Great job! You have a solid understanding!\"\n     * 50-69%: \"💪 Good effort! Keep learning and improving!\"\n     * Below 50%: \"📚 Keep studying! Practice makes perfect!\"\n   - Complete question review showing:\n     * Each question with user's answer vs correct answer\n     * Green background for correct, red for incorrect\n     * ✅ or ❌ indicator\n   - Restart quiz button\n\nDESIGN REQUIREMENTS:\n- Mobile responsive (works on all screen sizes)\n- Smooth animations and transitions\n- Clean, modern UI with rounded corners\n- Box shadows for depth\n- Emoji icons for visual appeal\n- No external dependencies (all CSS/JS embedded)\n\nOUTPUT:\nProvide only the complete HTML code, ready to save as a .html file and open in any browser. Include all CSS styles in <style> tags and all JavaScript in <script> tags.\n\nYour only response should be the complete HTML code. Start with <!DOCTYPE html> and end with </html>.\n\nAnd don't add this \"```html\" in entire code\n\nIMPORTANT:\n- Handle any number of questions (not just 15)\n- Parse questions even if formatting varies slightly\n- Make sure all options are properly displayed\n- Ensure the quiz is fully functional with no errors\n\n**Note** And the user will also give you a download link of a PDF, you have to embed its HTML code, when the user completes the test then there should be a download button above the result and the URL of the PDF should be embedded in it so that it gets downloaded by tapping on download.\n\n\n**Example code**  \n\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Etsy T-shirt Business Strategy Quiz</title>\n    <style>\n        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');\n\n        :root {\n            --primary-bg-start: #667eea;\n            --primary-bg-end: #764ba2;\n            --container-bg: #ffffff;\n            --text-color: #333;\n            --heading-color: #4a0e7e;\n            --option-bg: #f0f4f8;\n            --option-hover-bg: #e2e8f0;\n            --option-border: #d1d9e6;\n            --button-bg: #764ba2;\n            --button-hover-bg: #5f3a82;\n            --button-text: #fff;\n            --progress-bar-bg: #8c71d8;\n            --progress-container-bg: #e0e0e0;\n            --correct-color: #4CAF50; /* Green */\n            --incorrect-color: #f44336; /* Red */\n            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);\n            --shadow-dark: 0 8px 25px rgba(0, 0, 0, 0.2);\n            --border-radius: 12px;\n            --stat-card-bg: #f9f9f9;\n        }\n\n        body {\n            font-family: 'Poppins', sans-serif;\n            margin: 0;\n            padding: 20px;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            min-height: 100vh;\n            background: linear-gradient(135deg, var(--primary-bg-start), var(--primary-bg-end));\n            color: var(--text-color);\n            line-height: 1.6;\n            box-sizing: border-box;\n        }\n\n        #quiz-container, #results-container {\n            background: var(--container-bg);\n            border-radius: var(--border-radius);\n            box-shadow: var(--shadow-dark);\n            padding: 30px;\n            max-width: 800px;\n            width: 100%;\n            text-align: center;\n            animation: fadeIn 0.8s ease-out;\n            box-sizing: border-box;\n        }\n\n        @keyframes fadeIn {\n            from { opacity: 0; transform: translateY(20px); }\n            to { opacity: 1; transform: translateY(0); }\n        }\n\n        h1, h2 {\n            color: var(--heading-color);\n            margin-bottom: 15px;\n            font-weight: 700;\n        }\n\n        p {\n            margin-bottom: 20px;\n        }\n\n        #quiz-source {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: -10px;\n            margin-bottom: 25px;\n        }\n\n        #progress-container {\n            width: 100%;\n            height: 10px;\n            background-color: var(--progress-container-bg);\n            border-radius: 5px;\n            margin-bottom: 25px;\n            overflow: hidden;\n            position: relative;\n        }\n\n        #progress-bar {\n            height: 100%;\n            width: 0%;\n            background-color: var(--progress-bar-bg);\n            border-radius: 5px;\n            transition: width 0.4s ease-in-out;\n        }\n\n        #progress-text {\n            position: absolute;\n            top: -25px;\n            right: 0;\n            font-size: 0.8em;\n            color: #555;\n        }\n\n        #question-card {\n            background: #fdfdfd;\n            border: 1px solid var(--option-border);\n            border-radius: var(--border-radius);\n            padding: 25px;\n            margin-bottom: 25px;\n            box-shadow: var(--shadow-light);\n            text-align: left;\n            min-height: 120px;\n            display: flex;\n            flex-direction: column;\n            justify-content: center;\n            animation: slideIn 0.5s ease-out;\n        }\n\n        @keyframes slideIn {\n            from { opacity: 0; transform: translateX(-20px); }\n            to { opacity: 1; transform: translateX(0); }\n        }\n\n        #question-text {\n            font-size: 1.25em;\n            font-weight: 600;\n            margin-bottom: 25px;\n            color: var(--heading-color);\n        }\n\n        #options-container {\n            display: grid;\n            grid-template-columns: 1fr;\n            gap: 15px;\n        }\n\n        .option-btn {\n            background: var(--option-bg);\n            border: 1px solid var(--option-border);\n            border-radius: var(--border-radius);\n            padding: 15px 20px;\n            font-size: 1em;\n            color: var(--text-color);\n            cursor: pointer;\n            transition: all 0.3s ease;\n            text-align: left;\n            display: flex;\n            align-items: center;\n        }\n\n        .option-btn:hover:not(.selected):not(.correct):not(.incorrect) {\n            background-color: var(--option-hover-bg);\n            border-color: var(--primary-bg-start);\n            transform: translateY(-2px);\n            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n        }\n\n        .option-btn.selected {\n            border-color: var(--button-bg);\n            box-shadow: var(--shadow-light);\n        }\n\n        .option-btn.correct {\n            background-color: var(--correct-color);\n            color: white;\n            border-color: var(--correct-color);\n            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);\n            pointer-events: none;\n        }\n\n        .option-btn.incorrect {\n            background-color: var(--incorrect-color);\n            color: white;\n            border-color: var(--incorrect-color);\n            box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);\n            pointer-events: none;\n        }\n\n        .option-btn.disabled {\n            pointer-events: none;\n            opacity: 0.7;\n        }\n\n        .option-prefix {\n            font-weight: 600;\n            margin-right: 10px;\n            min-width: 20px;\n        }\n\n        button {\n            background-color: var(--button-bg);\n            color: var(--button-text);\n            border: none;\n            border-radius: var(--border-radius);\n            padding: 12px 25px;\n            font-size: 1.1em;\n            cursor: pointer;\n            transition: background-color 0.3s ease, transform 0.2s ease;\n            margin-top: 25px;\n            box-shadow: var(--shadow-light);\n            font-weight: 600;\n        }\n\n        button:hover:not(:disabled) {\n            background-color: var(--button-hover-bg);\n            transform: translateY(-2px);\n        }\n\n        button:disabled {\n            background-color: #ccc;\n            cursor: not-allowed;\n            box-shadow: none;\n        }\n\n        .hidden {\n            display: none;\n        }\n\n        /* Results Container */\n        #results-container {\n            padding: 40px;\n        }\n\n        #score-summary {\n            display: flex;\n            flex-wrap: wrap;\n            justify-content: center;\n            gap: 30px;\n            margin-top: 30px;\n            margin-bottom: 40px;\n        }\n\n        #score-circle {\n            width: 150px;\n            height: 150px;\n            border-radius: 50%;\n            background: conic-gradient(var(--correct-color) 0% var(--score-percentage, 0%), var(--progress-container-bg) var(--score-percentage, 0%) 100%);\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            font-size: 2.5em;\n            font-weight: 700;\n            color: var(--heading-color);\n            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1), var(--shadow-light);\n            position: relative;\n            margin-bottom: 20px;\n        }\n\n        #score-circle::before {\n            content: '';\n            position: absolute;\n            width: 120px;\n            height: 120px;\n            background-color: var(--container-bg);\n            border-radius: 50%;\n            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);\n        }\n        #score-circle span {\n            position: relative;\n            z-index: 1;\n        }\n\n\n        .stat-card {\n            background: var(--stat-card-bg);\n            border-radius: var(--border-radius);\n            padding: 20px;\n            box-shadow: var(--shadow-light);\n            flex: 1;\n            min-width: 180px;\n            max-width: 220px;\n            text-align: center;\n            display: flex;\n            flex-direction: column;\n            justify-content: center;\n            align-items: center;\n        }\n\n        .stat-card h3 {\n            margin: 0 0 10px 0;\n            font-size: 1.1em;\n            color: var(--heading-color);\n        }\n\n        .stat-card p {\n            font-size: 1.8em;\n            font-weight: 700;\n            margin: 0;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n        .stat-card p.correct-stat { color: var(--correct-color); }\n        .stat-card p.incorrect-stat { color: var(--incorrect-color); }\n        .stat-card p.percentage-stat { color: var(--button-bg); }\n\n\n        #performance-message {\n            font-size: 1.3em;\n            font-weight: 600;\n            margin-top: 30px;\n            margin-bottom: 40px;\n            color: var(--heading-color);\n            background: #e9e2f0;\n            padding: 15px;\n            border-radius: var(--border-radius);\n            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);\n        }\n\n        #review-container {\n            margin-top: 50px;\n            text-align: left;\n            border-top: 1px solid #eee;\n            padding-top: 30px;\n        }\n\n        #review-container h3 {\n            font-size: 1.5em;\n            color: var(--heading-color);\n            margin-bottom: 25px;\n        }\n\n        .review-item {\n            background: #fff;\n            border: 1px solid var(--option-border);\n            border-radius: var(--border-radius);\n            padding: 20px;\n            margin-bottom: 20px;\n            box-shadow: var(--shadow-light);\n        }\n\n        .review-item.correct {\n            background-color: #e6ffe6;\n            border-color: var(--correct-color);\n        }\n\n        .review-item.incorrect {\n            background-color: #ffe6e6;\n            border-color: var(--incorrect-color);\n        }\n\n        .review-item p {\n            margin: 0 0 10px 0;\n            font-size: 1.1em;\n            font-weight: 600;\n            color: #333;\n        }\n\n        .review-item .options {\n            margin-top: 10px;\n        }\n\n        .review-item .option {\n            padding: 8px 12px;\n            margin-bottom: 5px;\n            border-radius: 8px;\n            font-size: 0.95em;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n\n        .review-item .option.user-selected {\n            font-weight: bold;\n            background-color: #e0e7f7;\n            border: 1px solid #a9b9e6;\n        }\n        .review-item .option.user-selected.correct-answer {\n            background-color: var(--correct-color);\n            color: white;\n            border-color: var(--correct-color);\n        }\n        .review-item .option.user-selected.incorrect-answer {\n            background-color: var(--incorrect-color);\n            color: white;\n            border-color: var(--incorrect-color);\n        }\n        .review-item .option.correct-answer-display {\n             background-color: #d4edda;\n             border: 1px solid #c3e6cb;\n             font-weight: bold;\n             color: #155724;\n        }\n        .review-item .option.incorrect-user-selected { /* This is for the option user chose, when it was incorrect */\n             background-color: #f8d7da;\n             border: 1px solid #f5c6cb;\n             font-weight: bold;\n             color: #721c24;\n        }\n\n\n        /* Media Queries for Responsiveness */\n        @media (max-width: 768px) {\n            body {\n                padding: 15px;\n            }\n            #quiz-container, #results-container {\n                padding: 20px;\n            }\n            #question-text {\n                font-size: 1.1em;\n            }\n            .option-btn {\n                padding: 12px 15px;\n                font-size: 0.95em;\n            }\n            button {\n                padding: 10px 20px;\n                font-size: 1em;\n            }\n            #score-summary {\n                flex-direction: column;\n                gap: 20px;\n            }\n            .stat-card {\n                min-width: unset;\n                max-width: 100%;\n            }\n            #score-circle {\n                margin: 0 auto 30px auto; /* Center the circle */\n            }\n        }\n\n        @media (max-width: 480px) {\n            h1 {\n                font-size: 1.8em;\n            }\n            #quiz-source {\n                font-size: 0.8em;\n            }\n            #question-text {\n                font-size: 1em;\n            }\n            .option-btn {\n                font-size: 0.9em;\n            }\n            #score-circle {\n                width: 120px;\n                height: 120px;\n                font-size: 2em;\n            }\n            #score-circle::before {\n                width: 96px;\n                height: 96px;\n            }\n            .stat-card p {\n                font-size: 1.5em;\n            }\n            #performance-message {\n                font-size: 1.1em;\n            }\n            .review-item p {\n                font-size: 1em;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div id=\"quiz-container\">\n        <div id=\"quiz-header\">\n            <h1 id=\"quiz-title\"></h1>\n            <p id=\"quiz-source\"></p>\n        </div>\n        <div id=\"progress-container\">\n            <div id=\"progress-bar\"></div>\n            <span id=\"progress-text\"></span>\n        </div>\n        <div id=\"question-card\">\n            <p id=\"question-text\"></p>\n            <div id=\"options-container\"></div>\n        </div>\n        <button id=\"next-button\" disabled>Next Question</button>\n    </div>\n\n    <div id=\"results-container\" class=\"hidden\">\n        <h2>Quiz Results 🎉</h2>\n        <div id=\"score-summary\">\n            <div id=\"score-circle\"><span>0%</span></div>\n            <div class=\"stat-card\">\n                <h3>Correct Answers ✅</h3>\n                <p id=\"correct-answers\" class=\"correct-stat\">0</p>\n            </div>\n            <div class=\"stat-card\">\n                <h3>Incorrect Answers ❌</h3>\n                <p id=\"incorrect-answers\" class=\"incorrect-stat\">0</p>\n            </div>\n            <div class=\"stat-card\">\n                <h3>Percentage Score 📊</h3>\n                <p id=\"percentage-score\" class=\"percentage-stat\">0%</p>\n            </div>\n        </div>\n        <p id=\"performance-message\"></p>\n        <div id=\"review-container\">\n            <h3>Question Review 🤔</h3>\n            <div id=\"review-list\"></div>\n        </div>\n        <button id=\"restart-button\">Restart Quiz</button>\n    </div>\n\n    <script>\n        const quizTitle = \"Etsy T-shirt Business Strategy\";\n        const quizSource = \"ventureAi_Roadmap (6).pdf\";\n\n        const quizData = [\n            {\n                question: \"The core skill identified for individuals pursuing this business idea is:\",\n                options: [\"T-shirt designing\", \"Financial planning\", \"Marketing analysis\", \"Customer service\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"What is the initial financial goal for the business owner, as stated in the report?\",\n                options: [\"$500/month\", \"$1k/month\", \"$2k/month\", \"$1.5k/month\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"The report states that the current team size for this venture is:\",\n                options: [\"2\", \"3\", \"1\", \"4\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"How is the \\\"target market: all\\\" described in the strategic report?\",\n                options: [\"A minor oversight\", \"An acceptable challenge\", \"A sustainable approach\", \"A critical strategic misstep\"],\n                correctAnswer: \"D\"\n            },\n            {\n                question: \"In 2023, the global print-on-demand (POD) market was valued at approximately:\",\n                options: [\"$6 billion\", \"$5 billion\", \"$7 billion\", \"$8 billion\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"How many active buyers did Etsy reach in 2023?\",\n                options: [\"Nearly 50 million\", \"Nearly 90 million\", \"Nearly 70 million\", \"Over 100 million\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"Current market trends for Etsy t-shirts heavily lean towards:\",\n                options: [\"Generic designs\", \"Broad appeal products\", \"Highly specific niches\", \"Mass-produced items\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"Successful Etsy sellers are noted to thrive by targeting:\",\n                options: [\"Specific demographics\", \"All potential customers\", \"Undefined groups\", \"Broad demographics\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"What is the Etsy listing fee per listing, as stated in the report?\",\n                options: [\"$0.10 USD\", \"$0.20 USD\", \"$0.30 USD\", \"$0.40 USD\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"The total estimated startup costs for the initial 1-3 months are in which range?\",\n                options: [\"$100 - $200 USD\", \"$50 - $100 USD\", \"$70 - $180 USD\", \"$200 - $300 USD\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"What is the typical Print-on-Demand (POD) cost per t-shirt mentioned?\",\n                options: [\"$5 - $8 USD\", \"$15 - $20 USD\", \"$20 - $25 USD\", \"$10 - $15 USD\"],\n                correctAnswer: \"D\"\n            },\n            {\n                question: \"The Etsy transaction fee is calculated as 6.5% of the item price plus shipping. Which option represents this percentage?\",\n                options: [\"6.5%\", \"3.5%\", \"9.5%\", \"12.5%\"],\n                correctAnswer: \"A\"\n            },\n            {\n                question: \"On a $25 USD t-shirt, after POD and Etsy fees, the gross profit per item is around:\",\n                options: [\"$7.17 USD\", \"$9.17 USD\", \"$11.17 USD\", \"$5.00 USD\"],\n                correctAnswer: \"B\"\n            },\n            {\n                question: \"To achieve $1,000 USD in profit, approximately how many t-shirts need to be sold per month?\",\n                options: [\"75 t-shirts\", \"50 t-shirts\", \"109 t-shirts\", \"150 t-shirts\"],\n                correctAnswer: \"C\"\n            },\n            {\n                question: \"Phase 1 of the roadmap, \\\"Niche & Market Validation,\\\" is scheduled for which duration?\",\n                options: [\"Weeks 3-4\", \"Months 2-3\", \"Weeks 5-6\", \"Weeks 1-2\"],\n                correctAnswer: \"D\"\n            }\n        ];\n\n        let currentQuestionIndex = 0;\n        let score = 0;\n        let userAnswers = []; // Stores { questionIndex, selectedOptionIndex, isCorrect }\n        let selectedOptionForCurrentQuestion = null; // To prevent multiple selections\n\n        const quizContainer = document.getElementById('quiz-container');\n        const resultsContainer = document.getElementById('results-container');\n        const quizTitleElement = document.getElementById('quiz-title');\n        const quizSourceElement = document.getElementById('quiz-source');\n        const progressBar = document.getElementById('progress-bar');\n        const progressText = document.getElementById('progress-text');\n        const questionTextElement = document.getElementById('question-text');\n        const optionsContainer = document.getElementById('options-container');\n        const nextButton = document.getElementById('next-button');\n        const scoreCircleText = document.querySelector('#score-circle span');\n        const correctAnswersElement = document.getElementById('correct-answers');\n        const incorrectAnswersElement = document.getElementById('incorrect-answers');\n        const percentageScoreElement = document.getElementById('percentage-score');\n        const performanceMessageElement = document.getElementById('performance-message');\n        const reviewList = document.getElementById('review-list');\n        const restartButton = document.getElementById('restart-button');\n        const scoreCircle = document.getElementById('score-circle');\n\n\n        function initQuiz() {\n            quizTitleElement.textContent = quizTitle;\n            quizSourceElement.textContent = `(Based on: ${quizSource})`;\n            quizContainer.classList.remove('hidden');\n            resultsContainer.classList.add('hidden');\n            currentQuestionIndex = 0;\n            score = 0;\n            userAnswers = [];\n            selectedOptionForCurrentQuestion = null;\n            nextButton.disabled = true;\n            loadQuestion();\n            updateProgressBar();\n        }\n\n        function loadQuestion() {\n            if (currentQuestionIndex >= quizData.length) {\n                showResults();\n                return;\n            }\n\n            const currentQuestion = quizData[currentQuestionIndex];\n            questionTextElement.textContent = `${currentQuestionIndex + 1}. ${currentQuestion.question}`;\n            optionsContainer.innerHTML = '';\n            selectedOptionForCurrentQuestion = null;\n            nextButton.disabled = true;\n\n            const optionLetters = ['A', 'B', 'C', 'D'];\n            currentQuestion.options.forEach((option, index) => {\n                const button = document.createElement('button');\n                button.classList.add('option-btn');\n                button.innerHTML = `<span class=\"option-prefix\">${optionLetters[index]})</span> ${option}`;\n                button.addEventListener('click', () => selectOption(index, button));\n                optionsContainer.appendChild(button);\n            });\n\n            updateProgressBar();\n            // Trigger animation\n            questionTextElement.parentElement.style.animation = 'none';\n            void questionTextElement.parentElement.offsetWidth; // Trigger reflow\n            questionTextElement.parentElement.style.animation = 'slideIn 0.5s ease-out';\n        }\n\n        function selectOption(selectedIndex, selectedButton) {\n            if (selectedOptionForCurrentQuestion !== null) {\n                return; // Already selected an option for this question\n            }\n\n            selectedOptionForCurrentQuestion = selectedIndex;\n            const currentQuestion = quizData[currentQuestionIndex];\n            const correctOptionLetter = currentQuestion.correctAnswer;\n            const correctOptionIndex = correctOptionLetter.charCodeAt(0) - 'A'.charCodeAt(0);\n\n            const isCorrect = (selectedIndex === correctOptionIndex);\n\n            // Store user's answer\n            userAnswers.push({\n                questionIndex: currentQuestionIndex,\n                selectedOptionIndex: selectedIndex,\n                isCorrect: isCorrect\n            });\n\n            // Apply feedback to all options\n            Array.from(optionsContainer.children).forEach((button, index) => {\n                button.classList.add('disabled'); // Disable all options\n                if (index === correctOptionIndex) {\n                    button.classList.add('correct'); // Mark correct answer\n                } else if (index === selectedIndex) {\n                    button.classList.add('incorrect'); // Mark user's incorrect answer\n                }\n            });\n\n            if (isCorrect) {\n                score++;\n                selectedButton.classList.add('correct');\n            } else {\n                selectedButton.classList.add('incorrect');\n            }\n\n            nextButton.disabled = false;\n        }\n\n        function updateProgressBar() {\n            const progressPercentage = (currentQuestionIndex / quizData.length) * 100;\n            progressBar.style.width = `${progressPercentage}%`;\n            progressText.textContent = `Question ${currentQuestionIndex} of ${quizData.length}`;\n            if (currentQuestionIndex === 0) {\n                progressText.textContent = `Question 1 of ${quizData.length}`;\n            }\n        }\n\n        function showResults() {\n            quizContainer.classList.add('hidden');\n            resultsContainer.classList.remove('hidden');\n\n            const correct = userAnswers.filter(answer => answer.isCorrect).length;\n            const incorrect = userAnswers.filter(answer => !answer.isCorrect).length;\n            const totalQuestions = quizData.length;\n            const percentage = totalQuestions > 0 ? (correct / totalQuestions) * 100 : 0;\n\n            correctAnswersElement.textContent = correct;\n            incorrectAnswersElement.textContent = incorrect;\n            \n            // Animate score circle percentage\n            let currentScore = 0;\n            const scoreAnimationInterval = setInterval(() => {\n                if (currentScore >= percentage) {\n                    clearInterval(scoreAnimationInterval);\n                    scoreCircleText.textContent = `${Math.round(percentage)}%`;\n                } else {\n                    currentScore++;\n                    scoreCircleText.textContent = `${currentScore}%`;\n                }\n            }, 20); // Adjust speed for animation\n\n            percentageScoreElement.textContent = `${Math.round(percentage)}%`;\n\n            let performanceMessage = '';\n            if (percentage >= 90) {\n                performanceMessage = \"🌟 Outstanding! You're a true expert!\";\n                scoreCircle.style.setProperty('--score-color', '#4CAF50'); // Green\n            } else if (percentage >= 70) {\n                performanceMessage = \"👍 Great job! You have a solid understanding!\";\n                 scoreCircle.style.setProperty('--score-color', '#76ba4b'); // Light Green\n            } else if (percentage >= 50) {\n                performanceMessage = \"💪 Good effort! Keep learning and improving!\";\n                 scoreCircle.style.setProperty('--score-color', '#ffc107'); // Yellow\n            } else {\n                performanceMessage = \"📚 Keep studying! Practice makes perfect!\";\n                 scoreCircle.style.setProperty('--score-color', '#f44336'); // Red\n            }\n            performanceMessageElement.textContent = performanceMessage;\n            scoreCircle.style.setProperty('--score-percentage', `${percentage}%`);\n\n            // Populate review section\n            reviewList.innerHTML = '';\n            const optionLetters = ['A', 'B', 'C', 'D'];\n\n            userAnswers.forEach((userAnswer, index) => {\n                const question = quizData[userAnswer.questionIndex];\n                const reviewItem = document.createElement('div');\n                reviewItem.classList.add('review-item');\n                reviewItem.classList.add(userAnswer.isCorrect ? 'correct' : 'incorrect');\n\n                reviewItem.innerHTML = `\n                    <p>${userAnswer.questionIndex + 1}. ${question.question}</p>\n                    <div class=\"options\"></div>\n                `;\n                const optionsDiv = reviewItem.querySelector('.options');\n\n                question.options.forEach((optionText, optionIndex) => {\n                    const optionElement = document.createElement('div');\n                    optionElement.classList.add('option');\n                    optionElement.textContent = `${optionLetters[optionIndex]}) ${optionText}`;\n\n                    const correctOptionLetter = question.correctAnswer;\n                    const correctOptionIndex = correctOptionLetter.charCodeAt(0) - 'A'.charCodeAt(0);\n\n                    if (optionIndex === userAnswer.selectedOptionIndex) {\n                        optionElement.classList.add('user-selected');\n                        if (userAnswer.isCorrect) {\n                            optionElement.classList.add('correct-answer');\n                            optionElement.innerHTML += ' ✅';\n                        } else {\n                            optionElement.classList.add('incorrect-answer');\n                            optionElement.innerHTML += ' ❌';\n                        }\n                    }\n\n                    if (optionIndex === correctOptionIndex && optionIndex !== userAnswer.selectedOptionIndex) {\n                        optionElement.classList.add('correct-answer-display');\n                        optionElement.innerHTML += ' (Correct Answer)';\n                    }\n                     if (optionIndex === userAnswer.selectedOptionIndex && optionIndex !== correctOptionIndex) {\n                         optionElement.classList.add('incorrect-user-selected');\n                    }\n\n\n                    optionsDiv.appendChild(optionElement);\n                });\n                reviewList.appendChild(reviewItem);\n            });\n        }\n\n        nextButton.addEventListener('click', () => {\n            currentQuestionIndex++;\n            loadQuestion();\n        });\n\n        restartButton.addEventListener('click', initQuiz);\n\n        // Initialize the quiz when the page loads\n        initQuiz();\n    </script>\n</body>\n</html>\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        784,
+        48
+      ],
+      "id": "69f6225a-a478-44b2-9db6-4796d2b35023",
+      "name": "Wait a minute...."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Analyze document": {
+      "main": [
+        [
+          {
+            "node": "Designing-HTML.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Something...": {
+      "main": [
+        [
+          {
+            "node": "Wait a minute....",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generating MCQs": {
+      "main": [
+        [
+          {
+            "node": "Designing-HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent's brain...": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Wait a minute.....",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Wait a minute....",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generating MCQs",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generating Pdf": {
+      "main": [
+        [
+          {
+            "node": "Something....",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generating Pdf1": {
+      "main": [
+        [
+          {
+            "node": "Something...",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the input": {
+      "main": [
+        [
+          {
+            "node": "Checking Doc/Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checking Doc/Text": {
+      "main": [
+        [
+          {
+            "node": "It's Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "It's Text": {
+      "main": [
+        [
+          {
+            "node": "Generating MCQs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Something....": {
+      "main": [
+        [
+          {
+            "node": "Wait a minute.....",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait a minute.....": {
+      "main": [
+        [
+          {
+            "node": "Thanks (:",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Thanks (:": {
+      "main": [
+        []
+      ]
+    },
+    "Designing-HTML": {
+      "main": [
+        [
+          {
+            "node": "Generating Pdf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Designing-HTML.": {
+      "main": [
+        [
+          {
+            "node": "Generating Pdf1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait a minute....": {
+      "main": [
+        [
+          {
+            "node": "Thanks ):",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1b942d17-cb9a-4eac-b682-841b6cd976a3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3fbf15deff72d5a02f5d4a8c987a4acce00fe1fe8ab25bef92bdecac9bcc84ed"
+  },
+  "id": "WJUt0MDZMcjuC8TX",
+  "tags": [
+    {
+      "updatedAt": "2025-10-30T13:07:56.443Z",
+      "createdAt": "2025-10-30T13:07:56.443Z",
+      "id": "wMJVuw7zQp0cYx6H",
+      "name": "Mulerun"
+    }
+  ]
+}
