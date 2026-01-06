@@ -1,13 +1,13 @@
 # 🤖 Doc2Quiz Agent
 
-[![Platform](https://img.shields.io/badge/Platform-Mulerun-brightgreen?style=for-the-badge)](https://mulerun.com/)
+
 [![n8n](https://img.shields.io/badge/Workflow-n8n-blueviolet?style=for-the-badge)](https://n8n.io/)
 [![AI Model](https://img.shields.io/badge/Model-Google%20Gemini-blue?style=for-the-badge)](https://deepmind.google/technologies/gemini/)
 [![API](https://img.shields.io/badge/API-ConvertAPI-orange?style=for-the-badge)](https://www.convertapi.com/)
 
 This repository contains the complete n8n workflow source for the **Doc2Quiz Agent**, an automated 'Document-to-Test' generator deployed on [Mulerun](https://mulerun.com/).
 
-> **➡️ Interact with the live agent:** <https://mulerun.com/@rudntamug659yai/doc2quiz-robo>
+
 
 ---
 
